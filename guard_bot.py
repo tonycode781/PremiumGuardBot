@@ -9,7 +9,7 @@ from telegram.ext import (
 )
 
 # Pull in your token via env → makes it safe on Render
-BOT_TOKEN = os.getenv("8152358916:AAHVtZ3FF4qJSiJTyAdNcz7L_lZtIJMHUOw")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 # Only allow posting in this topic
 ALLOWED_TOPIC = "💬 Trader Chat"
