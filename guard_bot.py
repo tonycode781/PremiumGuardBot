@@ -6,8 +6,8 @@ from telegram.ext import Application, MessageHandler, filters, ContextTypes
 # Load your bot token from the environment
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Only this thread is writable (replace 8 with your Trader Chat thread_id)
-ALLOWED_THREAD_ID = 8
+# Only this thread is writable
+ALLOWED_THREAD_ID = 7
 REMINDER_MESSAGE = "⚠️ This topic is read-only. Please post in 💬 Trader Chat only."
 
 # Standard logging
@@ -20,14 +20,12 @@ logger = logging.getLogger(__name__)
 
 async def enforce_topic_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
-    # ignore non-messages or messages outside any thread
     if not msg or msg.message_thread_id is None:
         return
 
-    # DEBUG: log each thread so you can confirm IDs
+    # DEBUG: log each thread so you can confirm
     logger.info("Received in thread_id=%s: %s", msg.message_thread_id, msg.text)
 
-    # if it’s not the allowed thread, delete + remind
     if msg.message_thread_id != ALLOWED_THREAD_ID:
         try:
             await context.bot.delete_message(
