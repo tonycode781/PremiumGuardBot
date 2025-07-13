@@ -1,20 +1,16 @@
 import logging
 import os
 from telegram import Update
-from telegram.ext import (
-    Application,
-    MessageHandler,
-    filters,
-    ContextTypes,
-)
+from telegram.ext import Application, MessageHandler, filters, ContextTypes
 
-# Pull in your token via env → makes it safe on Render
+# Load your bot token from the environment
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Only allow posting in this topic
-ALLOWED_TOPIC = "💬 Trader Chat"
+# Only this thread is writable (replace 8 with your Trader Chat thread_id)
+ALLOWED_THREAD_ID = 8
 REMINDER_MESSAGE = "⚠️ This topic is read-only. Please post in 💬 Trader Chat only."
 
+# Standard logging
 logging.basicConfig(
     format="%(asctime)s %(levelname)s %(name)s: %(message)s",
     level=logging.INFO,
@@ -24,14 +20,19 @@ logger = logging.getLogger(__name__)
 
 async def enforce_topic_restriction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = update.message
-    if not msg or not msg.is_topic_message:
+    # ignore non-messages or messages outside any thread
+    if not msg or msg.message_thread_id is None:
         return
 
-    # bot's incoming Update gives you `msg.topic_name`
-    if msg.topic_name != ALLOWED_TOPIC:
+    # DEBUG: log each thread so you can confirm IDs
+    logger.info("Received in thread_id=%s: %s", msg.message_thread_id, msg.text)
+
+    # if it’s not the allowed thread, delete + remind
+    if msg.message_thread_id != ALLOWED_THREAD_ID:
         try:
             await context.bot.delete_message(
-                chat_id=msg.chat_id, message_id=msg.message_id
+                chat_id=msg.chat_id,
+                message_id=msg.message_id,
             )
             await context.bot.send_message(
                 chat_id=msg.chat_id,
@@ -45,7 +46,6 @@ async def enforce_topic_restriction(update: Update, context: ContextTypes.DEFAUL
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
-    # catch any plain-text message (not commands) and enforce our topic rule
     app.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, enforce_topic_restriction)
     )
